@@ -389,6 +389,30 @@ function getExerciseReference(exercise) {
   };
 }
 
+function openTikTokApp(event) {
+  const link = event.target instanceof Element
+    ? event.target.closest('[data-tiktok-search]')
+    : null;
+  if (!link || !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+
+  event.preventDefault();
+  const query = encodeURIComponent(link.dataset.tiktokSearch);
+  const webUrl = link.href;
+  let appOpened = false;
+
+  const handleVisibilityChange = () => {
+    if (document.hidden) appOpened = true;
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange, { once: true });
+  window.location.href = `tiktok://search?keyword=${query}`;
+
+  window.setTimeout(() => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    if (!appOpened) window.location.href = webUrl;
+  }, 1200);
+}
+
 function getDayImage(type) {
   const colors = {
     push: ['#22C55E', '#14532d'],
@@ -1017,7 +1041,7 @@ function renderWorkoutSession(workout) {
           <div class="exercise-image-small" style="background: ${getMuscleGradient(ex.muscle)}">
             <img class="exercise-reference-image" src="${getExerciseReference(ex).image}" alt="Contoh gerakan ${ex.name}" loading="lazy">
             <i class="fas ${getMuscleIcon(ex.muscle)}"></i>
-            <a class="workout-tiktok-link" href="${getExerciseReference(ex).tiktok}" target="_blank" rel="noopener noreferrer" aria-label="Lihat tutorial ${ex.name} di TikTok">
+            <a class="workout-tiktok-link" href="${getExerciseReference(ex).tiktok}" data-tiktok-search="${escapeHTML(`${ex.name} tutorial`)}" rel="noopener noreferrer" aria-label="Lihat tutorial ${ex.name} di TikTok">
               <i class="fab fa-tiktok"></i> Tutorial TikTok
             </a>
           </div>
@@ -1314,7 +1338,7 @@ function renderExerciseDetail(exercise, appearsInDays) {
           <i class="fas fa-info-circle"></i>
           Gunakan gambar ini sebagai referensi visual. <a href="${reference.source}" target="_blank" rel="noopener noreferrer">Lihat sumber dan contoh lainnya</a>.
         </p>
-        <a class="btn btn-tiktok" href="${reference.tiktok}" target="_blank" rel="noopener noreferrer">
+        <a class="btn btn-tiktok" href="${reference.tiktok}" data-tiktok-search="${escapeHTML(`${exercise.name} tutorial`)}" rel="noopener noreferrer">
           <i class="fab fa-tiktok"></i> Lihat tutorial di TikTok
         </a>
       </div>
@@ -1733,6 +1757,7 @@ function initSettingsHandlers() {
 // ==================== 20. INITIALIZATION ====================
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('click', openTikTokApp);
   initNavigation();
   initMobileMenu();
   initModalHandlers();
