@@ -131,6 +131,18 @@ function formatDate(dateStr) {
   }
 }
 
+function getLocalDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getHistoryDateKey(dateValue) {
+  const date = new Date(dateValue);
+  return Number.isNaN(date.getTime()) ? String(dateValue).slice(0, 10) : getLocalDateKey(date);
+}
+
 function escapeHTML(value) {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -250,7 +262,7 @@ function saveWeightEntry(exerciseId, weight) {
     if (!log[exerciseId]) {
       log[exerciseId] = [];
     }
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateKey();
     // Update today's entry or add new
     const existingIdx = log[exerciseId].findIndex(e => e.date === today);
     if (existingIdx >= 0) {
@@ -1208,12 +1220,20 @@ function finishWorkout(workout) {
   const data = loadWorkoutSets();
   let totalSets = 0;
   let completedSets = 0;
+  const weights = {};
 
   workout.exercises.forEach(ex => {
     totalSets += ex.sets;
+    const exerciseWeights = [];
     for (let s = 1; s <= ex.sets; s++) {
       const key = `${ex.id}_${s}`;
       if (data[key] && data[key].completed) completedSets++;
+      if (data[key] && data[key].completed && Number.isFinite(Number(data[key].weight))) {
+        exerciseWeights.push(Number(data[key].weight));
+      }
+    }
+    if (exerciseWeights.length > 0) {
+      weights[ex.id] = exerciseWeights;
     }
   });
 
@@ -1244,7 +1264,8 @@ function finishWorkout(workout) {
             workoutName: workout.name,
             exerciseCount: workout.exercises.length,
             completedSets: completedSets,
-            totalSets: totalSets
+            totalSets: totalSets,
+            weights: weights
           });
 
           showToast(`Latihan ${workout.name} selesai! 💪`);
@@ -1385,6 +1406,7 @@ function renderProgressPage() {
   renderMonthlyChart();
   renderHistory();
   renderWeightLogSection();
+  setupDatePicker();
 }
 
 function renderProgressStats() {
@@ -1623,7 +1645,7 @@ function renderHistory() {
       <div class="history-left">
         <div class="history-icon"><i class="fas fa-dumbbell"></i></div>
         <div>
-          <div class="history-workout">${entry.workoutName}</div>
+          <div class="history-workout">${escapeHTML(entry.workoutName)}</div>
           <div class="history-date">${formatDate(entry.date)}</div>
         </div>
       </div>
@@ -1632,6 +1654,106 @@ function renderHistory() {
       </div>
     </div>
   `).join('');
+}
+
+function renderSelectedDateHistory(dateKey) {
+  const card = document.getElementById('selectedDateHistoryCard');
+  const title = document.getElementById('selectedDateTitle');
+  const content = document.getElementById('selectedDateHistory');
+  const info = document.getElementById('selectedDateInfo');
+  if (!card || !title || !content || !info) return;
+
+  const selectedDate = new Date(`${dateKey}T00:00:00`);
+  const formattedDate = formatDate(selectedDate.toISOString());
+  const entries = loadHistory().filter(entry => getHistoryDateKey(entry.date) === dateKey);
+  const exerciseNameMap = {};
+  WORKOUT_DATA.forEach(day => {
+    day.exercises.forEach(ex => {
+      exerciseNameMap[ex.id] = ex.name;
+    });
+  });
+  const weightLog = loadWeightLog();
+
+  const getEntryWeights = (entry) => {
+    if (entry.weights && Object.keys(entry.weights).length > 0) {
+      return Object.entries(entry.weights).map(([exerciseId, values]) => ({
+        name: exerciseNameMap[exerciseId] || exerciseId,
+        values: values.filter(value => Number.isFinite(Number(value))).map(Number)
+      }));
+    }
+
+    return Object.entries(weightLog)
+      .map(([exerciseId, logs]) => ({
+        name: exerciseNameMap[exerciseId] || exerciseId,
+        values: logs
+          .filter(log => log.date === dateKey)
+          .map(log => Number(log.weight))
+          .filter(Number.isFinite)
+      }))
+      .filter(item => item.values.length > 0);
+  };
+
+  title.textContent = formattedDate;
+  card.style.display = '';
+
+  if (entries.length === 0) {
+    info.innerHTML = '<p class="date-info-text selected"><i class="fas fa-info-circle"></i> Tidak ada latihan yang tersimpan pada tanggal ini.</p>';
+    content.innerHTML = `
+      <div class="empty-state date-history-empty">
+        <i class="fas fa-calendar-xmark"></i>
+        <p>Belum ada riwayat latihan pada tanggal ini.</p>
+      </div>
+    `;
+    return;
+  }
+
+  info.innerHTML = `<p class="date-info-text selected"><i class="fas fa-check-circle"></i> ${entries.length} sesi latihan tersimpan pada tanggal ini.</p>`;
+  content.innerHTML = entries.map(entry => `
+    <div class="workout-detail-item">
+      <div class="workout-detail-header">
+        <div class="workout-detail-title">${escapeHTML(entry.workoutName)}</div>
+        <div class="workout-detail-time">${new Date(entry.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</div>
+      </div>
+      <div class="workout-detail-stats">
+        <span class="workout-stat"><i class="fas fa-check"></i> ${entry.completedSets}/${entry.totalSets} set selesai</span>
+        <span class="workout-stat"><i class="fas fa-dumbbell"></i> ${entry.exerciseCount} latihan</span>
+      </div>
+      ${getEntryWeights(entry).length > 0 ? `
+        <div class="workout-weights">
+          <div class="workout-weights-title"><i class="fas fa-weight-hanging"></i> Beban latihan</div>
+          <div class="workout-weights-list">
+            ${getEntryWeights(entry).map(item => `
+              <div class="workout-weight-row">
+                <span>${escapeHTML(item.name)}</span>
+                <strong>${item.values.join(' / ')} kg</strong>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : '<div class="workout-no-weight"><i class="fas fa-info-circle"></i> Belum ada beban yang dicatat pada sesi ini.</div>'}
+    </div>
+  `).join('');
+}
+
+function setupDatePicker() {
+  const picker = document.getElementById('historyDatePicker');
+  const todayButton = document.getElementById('btnShowToday');
+  if (!picker) return;
+
+  const showDate = (dateKey) => {
+    picker.value = dateKey;
+    renderSelectedDateHistory(dateKey);
+  };
+
+  picker.onchange = () => {
+    if (picker.value) showDate(picker.value);
+  };
+
+  if (todayButton) {
+    todayButton.onclick = () => showDate(getLocalDateKey());
+  }
+
+  showDate(picker.value || getLocalDateKey());
 }
 
 function renderWeightLogSection() {
