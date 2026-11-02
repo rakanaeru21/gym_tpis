@@ -58,8 +58,7 @@
       messages.scrollTop = messages.scrollHeight;
       window.setTimeout(function () {
         typing.remove();
-        const previous = messages.querySelector('.gym-ai-message.user:last-of-type');
-        const context = { exercise: previous ? window.GymAIResponses.findExercise(previous.textContent) : null };
+        const context = window.GymAIContext ? window.GymAIContext.get() : {};
         const response = window.GymAIResponses.buildResponse(clean, context);
         addMessage('assistant', response.text);
       }, 420);
@@ -83,6 +82,7 @@
     panel.querySelector('.gym-ai-clear').addEventListener('click', function () {
       messages.innerHTML = '';
       localStorage.removeItem(HISTORY_KEY);
+      if (window.GymAIContext) window.GymAIContext.reset();
       addMessage('assistant', 'Percakapan sudah dibersihkan. Apa yang ingin kamu pelajari?', false);
     });
   }
