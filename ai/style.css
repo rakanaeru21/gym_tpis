@@ -1,0 +1,68 @@
+.gym-ai-launcher {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 13px 17px;
+    border: 1px solid rgba(34, 197, 94, .45);
+    border-radius: 999px;
+    color: #fff;
+    background: linear-gradient(135deg, #22c55e, #15803d);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .35), 0 0 0 5px rgba(34, 197, 94, .08);
+    font-weight: 700;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.gym-ai-launcher:hover { transform: translateY(-3px); box-shadow: 0 16px 35px rgba(0, 0, 0, .4), 0 0 0 7px rgba(34, 197, 94, .1); }
+.gym-ai-panel {
+    position: fixed;
+    right: 24px;
+    bottom: 84px;
+    z-index: 1199;
+    width: min(390px, calc(100vw - 32px));
+    height: min(650px, calc(100vh - 110px));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #26332c;
+    border-radius: 20px;
+    background: #101612;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, .55);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(14px) scale(.98);
+    transition: opacity .22s ease, transform .22s ease;
+}
+.gym-ai-panel.open { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+.gym-ai-header { display: flex; justify-content: space-between; align-items: center; padding: 18px; border-bottom: 1px solid #243027; background: linear-gradient(135deg, rgba(34, 197, 94, .17), rgba(16, 22, 18, .8)); }
+.gym-ai-title { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 800; }
+.gym-ai-avatar { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 10px; color: #0b0d10; background: #4ade80; }
+.gym-ai-header p { margin: 4px 0 0 40px; color: #9ca3af; font-size: 11px; }
+.gym-ai-status { display: inline-block; width: 7px; height: 7px; margin-right: 4px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+.gym-ai-clear { color: #9ca3af; padding: 8px; }
+.gym-ai-clear:hover { color: #f87171; }
+.gym-ai-messages { flex: 1; overflow-y: auto; padding: 16px; }
+.gym-ai-message { display: flex; margin-bottom: 12px; animation: gymAiIn .24s ease; }
+.gym-ai-message.user { justify-content: flex-end; }
+.gym-ai-bubble { max-width: 88%; padding: 11px 13px; border-radius: 15px 15px 15px 4px; color: #d1d5db; background: #1b251e; font-size: 13px; line-height: 1.55; }
+.gym-ai-message.user .gym-ai-bubble { border-radius: 15px 15px 4px 15px; color: #052e16; background: #4ade80; }
+.gym-ai-label { color: #86efac; font-weight: 700; }
+.gym-ai-message.user .gym-ai-label { color: #052e16; }
+.gym-ai-suggestions { display: flex; gap: 7px; padding: 0 14px 10px; overflow-x: auto; scrollbar-width: none; }
+.gym-ai-suggestions::-webkit-scrollbar { display: none; }
+.gym-ai-suggestions button { flex: 0 0 auto; padding: 7px 10px; border: 1px solid #2d4935; border-radius: 999px; color: #a7f3b8; background: #152119; font-size: 11px; }
+.gym-ai-suggestions button:hover { border-color: #4ade80; background: #1b3021; }
+.gym-ai-form { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid #243027; }
+.gym-ai-input { min-width: 0; flex: 1; padding: 11px 13px; border: 1px solid #2a3a2e; border-radius: 12px; color: #fff; background: #18201a; font-size: 13px; }
+.gym-ai-input:focus { border-color: #4ade80; box-shadow: 0 0 0 3px rgba(74, 222, 128, .1); }
+.gym-ai-send { width: 40px; border-radius: 12px; color: #052e16; background: #4ade80; }
+.gym-ai-send:hover { background: #86efac; }
+.gym-ai-disclaimer { padding: 0 14px 12px; color: #6b7280; font-size: 10px; text-align: center; }
+.gym-ai-typing { display: flex; gap: 4px; padding: 14px; }
+.gym-ai-typing span { width: 6px; height: 6px; border-radius: 50%; background: #86efac; animation: gymAiBounce 1s infinite ease-in-out; }
+.gym-ai-typing span:nth-child(2) { animation-delay: .15s; }.gym-ai-typing span:nth-child(3) { animation-delay: .3s; }
+@keyframes gymAiIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes gymAiBounce { 0%, 60%, 100% { transform: translateY(0); opacity: .5; } 30% { transform: translateY(-4px); opacity: 1; } }
+@media (max-width: 480px) { .gym-ai-launcher { right: 14px; bottom: 14px; padding: 12px 14px; } .gym-ai-panel { right: 8px; bottom: 72px; width: calc(100vw - 16px); height: min(650px, calc(100vh - 90px)); } }

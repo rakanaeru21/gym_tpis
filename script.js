@@ -77,6 +77,8 @@ const WORKOUT_DATA = [
   }
 ];
 
+window.WORKOUT_DATA = WORKOUT_DATA;
+
 // ==================== 2. STORAGE KEYS ====================
 
 const STORAGE_KEYS = {
